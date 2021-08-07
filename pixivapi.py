@@ -1,7 +1,7 @@
 import json
 import random
 
-from pixivpy3 import AppPixivAPI, PixivAPI
+from pixivpy3 import AppPixivAPI
 import pixiv_auth
 
 
@@ -72,6 +72,40 @@ def daily_ranking(r18):
     img_dict = {'author': author, 'title': title, 'img_url': img_url}
 
     return img_dict
+
+
+
+def daily_ranking_first():
+    # initialize
+    aapi = AppPixivAPI()
+    tokens = loadtoken()
+    aapi.set_auth(tokens['access_token'], tokens['refresh_token'])
+
+    json_result = aapi.illust_ranking()
+
+    illusts_array = json_result.illusts
+
+    illust = illusts_array[0]
+    author = illust['user']['name']
+    title = illust.title
+    img_url = converturl(illust.image_urls['large'])
+    img_dict_fir = {'author': author, 'title': title, 'img_url': img_url}
+
+    illust = illusts_array[1]
+    author = illust['user']['name']
+    title = illust.title
+    img_url = converturl(illust.image_urls['large'])
+    img_dict_sec = {'author': author, 'title': title, 'img_url': img_url}
+
+    illust = illusts_array[2]
+    author = illust['user']['name']
+    title = illust.title
+    img_url = converturl(illust.image_urls['large'])
+    img_dict_trd = {'author': author, 'title': title, 'img_url': img_url}
+
+    return {'first': img_dict_fir, 'second': img_dict_sec, 'third': img_dict_trd}
+
+
 
 
 def search_tag(tag, r18):

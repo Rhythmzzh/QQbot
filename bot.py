@@ -20,7 +20,7 @@ from graia.scheduler.timers import crontabify
 import dyanmic as dy
 import lolicon as loli
 import huizhan as hz
-import pixiv_daily
+import pixivapi
 
 loop = asyncio.get_event_loop()
 bcc = Broadcast(loop=loop)
@@ -65,6 +65,9 @@ setu_flag = True
 setu_num = 1
 mrsetu_num = 1
 slsetu_num = 1
+pixiv_daily_num = 1
+pixiv_tag_num = 1
+pixiv_rec_num = 1
 setu_index = 0
 
 
@@ -88,6 +91,9 @@ async def groupMessage(app: GraiaMiraiApplication, group: Group, message: Messag
     global fudu
     global mrsetu_num
     global slsetu_num
+    global pixiv_daily_num
+    global pixiv_tag_num
+    global pixiv_rec_num
 
     if message.asDisplay() == "妹妹还活着吗":
         await app.sendGroupMessage(group, MessageChain.create([Plain("我在哦~")]))
@@ -148,6 +154,10 @@ boss血量：      此功能已删除（别偷辣别偷辣别偷辣别偷辣）
             setu_num = int(setu_num_t[1])
             mrsetu_num = int(setu_num_t[1])
             slsetu_num = int(setu_num_t[1])
+            pixiv_rec_num = int(setu_num_t[1])
+            pixiv_tag_num = int(setu_num_t[1])
+            pixiv_daily_num = int(setu_num_t[1])
+
             finalmsg = "妹妹又发现了" + setu_num_t[1] + "张新涩图哦！"
         else:
             finalmsg = "乌乌 妹妹不认识你鸭。"
@@ -189,7 +199,7 @@ boss血量：      此功能已删除（别偷辣别偷辣别偷辣别偷辣）
 
 
             else:
-                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 10min)")]))
+                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 5min)")]))
         else:
             await app.sendGroupMessage(group, MessageChain.create([Plain("涩图功能被妹妹吃掉辣~")]))
 
@@ -250,7 +260,7 @@ boss血量：      此功能已删除（别偷辣别偷辣别偷辣别偷辣）
 
 
             else:
-                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 10min)")]))
+                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 5min)")]))
         else:
             await app.sendGroupMessage(group, MessageChain.create([Plain("涩图功能被妹妹吃掉辣~")]))
 
@@ -259,6 +269,7 @@ boss血量：      此功能已删除（别偷辣别偷辣别偷辣别偷辣）
 
 
     # pixiv每日色图
+    '''
     if message.asDisplay() == "每日涩图":
         if setu_flag:
             # 次数判定
@@ -273,9 +284,114 @@ boss血量：      此功能已删除（别偷辣别偷辣别偷辣别偷辣）
 
 
             else:
-                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 10min)")]))
+                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 5min)")]))
         else:
             await app.sendGroupMessage(group, MessageChain.create([Plain("涩图功能被妹妹吃掉辣~")]))
+
+    '''
+
+
+    # pixiv功能！！！！ 使用接口
+    #日榜
+    if message.asDisplay() == "涩图日榜":
+        if setu_flag:
+            if pixiv_daily_num > 0:
+                img_dict = pixivapi.daily_ranking(0)
+                author = 'author: ' + img_dict['author']
+                title = 'title: ' + img_dict['title']
+                info = title + "\n" + author
+                img_url = img_dict['img_url']
+
+                msgchain = MessageChain.create([Image.fromNetworkAddress(img_url), Plain(info)])
+                pixiv_daily_num -= 1
+                await app.sendGroupMessage(group, msgchain)
+
+
+            else:
+                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 5min)")]))
+        else:
+            await app.sendGroupMessage(group, MessageChain.create([Plain("涩图功能被妹妹吃掉辣~")]))
+
+
+
+    # 日榜r18
+    if message.asDisplay() == 'gg日榜':
+        img_dict = pixivapi.daily_ranking(1)
+        author = 'author: ' + img_dict['author']
+        title = 'title: ' + img_dict['title']
+        info = title + "\n" + author
+        img_url = img_dict['img_url']
+
+        msgchain = MessageChain.create([Image.fromNetworkAddress(img_url), Plain(info)])
+        await app.sendGroupMessage(group, msgchain)
+
+    # tag
+    if message.asDisplay().startswith('涩图tag'):
+        if setu_flag:
+            if pixiv_tag_num > 0:
+                tag = message.asDisplay().split(' ')[1]
+
+                img_dict = pixivapi.search_tag(tag, 0)
+                if img_dict is not None:
+                    author = 'author: ' + img_dict['author']
+                    title = 'title: ' + img_dict['title']
+                    info = title + "\n" + author
+                    img_url = img_dict['img_url']
+
+                    msgchain = MessageChain.create([Image.fromNetworkAddress(img_url), Plain(info)])
+                    pixiv_tag_num -= 1
+                    await app.sendGroupMessage(group, msgchain)
+                else:
+                    msgchain = MessageChain.create([Plain("没有找到这个tag哦~")])
+                    await app.sendGroupMessage(group, msgchain)
+            else:
+                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 5min)")]))
+        else:
+            await app.sendGroupMessage(group, MessageChain.create([Plain("涩图功能被妹妹吃掉辣~")]))
+
+
+
+    if message.asDisplay().startswith('gggg'):
+        tag = message.asDisplay().split(' ')[1]
+        img_dict = pixivapi.search_tag(tag, 1)
+
+        if img_dict is not None:
+            author = 'author: ' + img_dict['author']
+            title = 'title: ' + img_dict['title']
+            info = title + "\n" + author
+            img_url = img_dict['img_url']
+
+            msgchain = MessageChain.create([Image.fromNetworkAddress(img_url), Plain(info)])
+            await app.sendGroupMessage(group, msgchain)
+        else:
+            msgchain = MessageChain.create([Plain("没有找到这个tag哦~")])
+            await app.sendGroupMessage(group, msgchain)
+
+
+
+    # 推荐
+    if message.asDisplay() == '涩图推荐':
+        if setu_flag:
+            if pixiv_rec_num > 0:
+                img_dict = pixivapi.recommended()
+                author = 'author: ' + img_dict['author']
+                title = 'title: ' + img_dict['title']
+                info = title + "\n" + author
+                img_url = img_dict['img_url']
+
+                msgchain = MessageChain.create([Image.fromNetworkAddress(img_url), Plain(info)])
+                pixiv_rec_num -= 1
+                await app.sendGroupMessage(group, msgchain)
+            else:
+                await app.sendGroupMessage(group, MessageChain.create([Plain("呜呜呜，妹妹累了，妹妹不想发涩图了(cd: 5min)")]))
+        else:
+            await app.sendGroupMessage(group, MessageChain.create([Plain("涩图功能被妹妹吃掉辣~")]))
+
+
+
+
+
+
 
     # 复读
 
@@ -293,6 +409,8 @@ boss血量：      此功能已删除（别偷辣别偷辣别偷辣别偷辣）
 
     else:
         fudu = temp
+
+
 
     # 抽卡相关
     # 单抽
@@ -411,7 +529,7 @@ boss血量：      此功能已删除（别偷辣别偷辣别偷辣别偷辣）
     #周边
     if message.asDisplay() == "周边":
         await app.sendGroupMessage(group, MessageChain.create([
-            Image.fromLocalFile("images/zhoubian.jpg"),
+            Image.fromLocalFile("images/zhoubian.jpg")
         ]))
 
 
@@ -552,15 +670,69 @@ async def dynamic():
         await messages.sendGroupsMessages(app=app, groups_id=[GROUP_ID_NGCS], messages=[finalmsg])
         writeconfig(dict)
 
+    old_token = pixivapi.loadtoken()['refresh_token']
+    pixivapi.refresh_token(old_token)
 
-@scheduler.schedule(crontabify('*/10 * * * *'))
+
+@scheduler.schedule(crontabify('*/5 * * * *'))
 async def setuupdate():
     global setu_num
     global mrsetu_num
     global slsetu_num
+    global pixiv_daily_num
+    global pixiv_tag_num
+    global pixiv_rec_num
+
     setu_num = 1
     mrsetu_num = 1
     slsetu_num = 1
+    pixiv_daily_num = 1
+    pixiv_tag_num = 1
+    pixiv_rec_num = 1
+
+
+#三张涩图
+@scheduler.schedule(crontabify('0 14 * * * 0'))
+async def postthird():
+    img_dict = pixivapi.daily_ranking_first()['third']
+    author = 'author: ' + img_dict['author']
+    title = 'title: ' + img_dict['title']
+    info = '涩图时间到了~本张图是PIXIV排行榜日榜的第三名哦~\n\n'
+    info += title + "\n" + author
+    img_url = img_dict['img_url']
+
+    msgchain = MessageChain.create([Image.fromNetworkAddress(img_url), Plain(info)])
+    await messages.sendGroupsMessages(app=app, groups_id=[GROUP_ID_NGCS], messages=[msgchain])
+
+@scheduler.schedule(crontabify('0 17 * * * 0'))
+async def postsecond():
+    img_dict = pixivapi.daily_ranking_first()['second']
+    author = 'author: ' + img_dict['author']
+    title = 'title: ' + img_dict['title']
+    info = '涩图时间到了~本张图是PIXIV排行榜日榜的第二名哦~\n\n'
+    info += title + "\n" + author
+    img_url = img_dict['img_url']
+
+    msgchain = MessageChain.create([Image.fromNetworkAddress(img_url), Plain(info)])
+    await messages.sendGroupsMessages(app=app, groups_id=[GROUP_ID_NGCS], messages=[msgchain])
+
+@scheduler.schedule(crontabify('0 20 * * * 0'))
+async def postfirst():
+    img_dict = pixivapi.daily_ranking_first()['first']
+    author = 'author: ' + img_dict['author']
+    title = 'title: ' + img_dict['title']
+    info = '锵锵锵！~本张图是PIXIV排行榜日榜的第一名哦~\n\n'
+    info += title + "\n" + author
+    img_url = img_dict['img_url']
+
+    msgchain = MessageChain.create([Image.fromNetworkAddress(img_url), Plain(info)])
+    await messages.sendGroupsMessages(app=app, groups_id=[GROUP_ID_NGCS], messages=[msgchain])
+
+
+
+
+
+
 
 
 app.launch_blocking()
